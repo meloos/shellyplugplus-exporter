@@ -1,0 +1,13 @@
+services:
+  shelly-exporter:
+    build: .
+    container_name: shelly-exporter
+    restart: always
+    network_mode: host
+    environment:
+      SHELLY_DEVICES: |
+        living_room_plug,192.168.1.100
+        garage_plug,192.168.1.101
+      SHELLY_USERNAME: "admin"
+      SHELLY_HTTP_PASSWORD: "your_http_digest_password"
+      SCRAPE_INTERVAL: "10"
