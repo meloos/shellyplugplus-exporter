@@ -41,3 +41,23 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t shellyplugplus-exporter:test .
+
+  e2e-mock-shelly:
+    name: E2E mock Shelly test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Docker image
+        run: docker build -t shellyplugplus-exporter:e2e .
+
+      - name: Run E2E test against mock Shelly
+        shell: bash
+        run: bash tests/e2e/run_e2e_mock.sh

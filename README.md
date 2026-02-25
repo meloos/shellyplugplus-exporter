@@ -1,5 +1,7 @@
 # Shelly Plug Gen3 Prometheus Exporter
 
+[![CI](https://github.com/meloos/shellyplugplus-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/meloos/shellyplugplus-exporter/actions/workflows/ci.yml)
+
 A lightweight Prometheus exporter for Shelly Plug Gen3 devices.
 
 Tested with:
@@ -65,3 +67,8 @@ docker compose up -d --build
 
 Then configure Prometheus to scrape:
 - `http://<exporter-host>:9924/metrics`
+
+## Testing
+
+For local and CI end-to-end mock testing instructions, see:
+- `tests/README.md`

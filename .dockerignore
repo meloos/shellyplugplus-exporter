@@ -13,3 +13,4 @@ venv
 README.md
 docker-compose.yml
 docker-compose.yml.example
+tests
