@@ -3,6 +3,8 @@ set -euo pipefail
 
 IMAGE_TAG="${IMAGE_TAG:-shellyplugplus-exporter:e2e}"
 CONTAINER_NAME="${CONTAINER_NAME:-shelly-exporter-e2e}"
+MOCK_CONTAINER_NAME="${MOCK_CONTAINER_NAME:-shelly-mock-e2e}"
+NETWORK_NAME="${NETWORK_NAME:-shelly-e2e-net}"
 MOCK_HOST="${MOCK_HOST:-127.0.0.1}"
 MOCK_PORT="${MOCK_PORT:-18080}"
 EXPORTER_PORT="${EXPORTER_PORT:-9924}"
@@ -28,30 +30,43 @@ cleanup() {
     docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
   fi
 
-  if [[ -n "${MOCK_PID:-}" ]]; then
-    kill "${MOCK_PID}" >/dev/null 2>&1 || true
+  if docker ps -a --format '{{.Names}}' | grep -q "^${MOCK_CONTAINER_NAME}$"; then
+    docker rm -f "${MOCK_CONTAINER_NAME}" >/dev/null 2>&1 || true
+  fi
+
+  if docker network ls --format '{{.Name}}' | grep -q "^${NETWORK_NAME}$"; then
+    docker network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
 
-echo "[E2E] Starting mock Shelly server on ${MOCK_HOST}:${MOCK_PORT}"
-python3 tests/e2e/mock_shelly_server.py &
-MOCK_PID=$!
-
-if ! wait_for_url "http://${MOCK_HOST}:${MOCK_PORT}/rpc/Switch.GetStatus?id=0" 20; then
-  echo "[E2E] Mock Shelly server did not become ready in time"
-  exit 1
-fi
-
 echo "[E2E] Building Docker image: ${IMAGE_TAG}"
 docker build -t "${IMAGE_TAG}" .
+
+echo "[E2E] Creating Docker network: ${NETWORK_NAME}"
+docker network create "${NETWORK_NAME}" >/dev/null
+
+echo "[E2E] Starting mock Shelly container"
+docker run -d --rm \
+  --name "${MOCK_CONTAINER_NAME}" \
+  --network "${NETWORK_NAME}" \
+  -p "${MOCK_PORT}:${MOCK_PORT}" \
+  -v "$PWD/tests/e2e/mock_shelly_server.py:/mock_shelly_server.py:ro" \
+  python:3.12-alpine \
+  python /mock_shelly_server.py >/dev/null
+
+if ! wait_for_url "http://${MOCK_HOST}:${MOCK_PORT}/rpc/Switch.GetStatus?id=0" 20; then
+  echo "[E2E] Mock Shelly endpoint did not become ready in time"
+  docker logs "${MOCK_CONTAINER_NAME}" || true
+  exit 1
+fi
 
 echo "[E2E] Starting exporter container"
 docker run -d --rm \
   --name "${CONTAINER_NAME}" \
-  --add-host=host.docker.internal:host-gateway \
+  --network "${NETWORK_NAME}" \
   -p "${EXPORTER_PORT}:9924" \
-  -e SHELLY_DEVICES="mock,host.docker.internal:${MOCK_PORT}" \
+  -e SHELLY_DEVICES="mock,${MOCK_CONTAINER_NAME}:${MOCK_PORT}" \
   -e SCRAPE_INTERVAL="${SCRAPE_INTERVAL}" \
   "${IMAGE_TAG}" >/dev/null
 
@@ -66,6 +81,7 @@ done
 
 if ! grep -q 'shelly_up{device="mock"} 1.0\|shelly_up{device="mock"} 1' "${METRICS_FILE}"; then
   echo "[E2E] Exporter did not expose expected mock metrics in time"
+  docker logs "${CONTAINER_NAME}" || true
   exit 1
 fi
 

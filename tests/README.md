@@ -13,9 +13,9 @@ Mock server payload source:
 - `tests/e2e/mock_shelly_server.py`
 
 The script does the following:
-1. Starts a local mock Shelly RPC server (`/rpc/Switch.GetStatus?id=0`).
+1. Creates a dedicated Docker network and starts a mock Shelly RPC container (`/rpc/Switch.GetStatus?id=0`).
 2. Builds the exporter Docker image.
-3. Runs the exporter container against the mock endpoint.
+3. Runs the exporter container against the mock endpoint on the same Docker network.
 4. Scrapes `/metrics` from the exporter.
 5. Asserts expected metric values.
 
