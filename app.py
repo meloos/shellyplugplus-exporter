@@ -35,14 +35,14 @@ scrape_errors = Counter(
 )
 
 energy_total = Counter(
-    "shelly_energy_wattminute_total",
-    "Total consumed energy",
+    "shelly_energy_watthour_total",
+    "Total consumed energy in watt-hours",
     ["device"]
 )
 
 energy_returned_total = Counter(
-    "shelly_energy_returned_wattminute_total",
-    "Total returned energy",
+    "shelly_energy_returned_watthour_total",
+    "Total returned energy in watt-hours",
     ["device"]
 )
 

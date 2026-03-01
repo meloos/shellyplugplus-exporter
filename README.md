@@ -55,8 +55,8 @@ All metrics include the `device` label.
 - `shelly_temperature_celsius` (Gauge): Device temperature in Celsius (when provided by device).
 - `shelly_up` (Gauge): Device scrape health (`1` = reachable and parsed, `0` = scrape failed).
 - `shelly_scrape_errors_total` (Counter): Number of failed scrapes.
-- `shelly_energy_wattminute_total` (Counter): Cumulative imported/consumed energy increments, in watt-minutes.
-- `shelly_energy_returned_wattminute_total` (Counter): Cumulative returned/exported energy increments, in watt-minutes.
+- `shelly_energy_watthour_total` (Counter): Cumulative imported/consumed energy increments, in watt-hours.
+- `shelly_energy_returned_watthour_total` (Counter): Cumulative returned/exported energy increments, in watt-hours.
 
 ## Run
 
